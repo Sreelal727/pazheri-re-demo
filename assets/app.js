@@ -183,11 +183,11 @@ function renderDashboard(){
   const portfolio=P.reduce((s,p)=>s+totalValue(p),0);
 
   const kpis=[
-    {ic:'map',   c:'#0f5132', val:active.length, lab:'Active Plots', tr:'+3 this month', trc:'up'},
+    {ic:'map',   c:'#1b2769', val:active.length, lab:'Active Plots', tr:'+3 this month', trc:'up'},
     {ic:'scale', c:deptColor('legal'), val:awaitingLegal, lab:'Awaiting Legal Action', tr:'live', trc:'flat'},
     {ic:'coins', c:deptColor('finance'), val:awaitingFinance, lab:'Awaiting Finance Action', tr:'needs attention', trc:'down'},
     {ic:'check', c:'#16a34a', val:completed, lab:'Completed & Filed', tr:'+2 this month', trc:'up'},
-    {ic:'wallet',c:'#7c3aed', val:lakh(portfolio), lab:'Portfolio Value', tr:P.length+' plots', trc:'flat'},
+    {ic:'wallet',c:'#b8862b', val:lakh(portfolio), lab:'Portfolio Value', tr:P.length+' plots', trc:'flat'},
   ];
 
   // stage distribution
