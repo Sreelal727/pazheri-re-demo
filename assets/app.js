@@ -312,28 +312,30 @@ function renderPlots(){
       ${list.map(plotCard).join('') || '<div class="empty card pad">No plots match your filter.</div>'}
     </div>`;
 }
+const PRIO_DOT={HIGH:'#ef4444',MED:'#fbbf24',LOW:'#cbd5e1'};
 function plotCard(p){
   const dept=deptOfStatus(p.statusKey); const c=deptColor(dept);
   return `<div class="card plot" data-plot="${p.id}">
-    <div class="stripe" style="background:${c}"></div>
-    <div class="top">
-      <div style="flex:1">
-        <span class="plotno">PLOT ${p.plot}</span>
-        <div class="cust">${esc(p.customer)}</div>
-        <div class="loc">${icon('pin')}${esc(p.location)}</div>
+    <div class="plot-head" style="background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(0,0,0,.20)),${c}">
+      <div class="ph-top">
+        <span class="plotno-h">PLOT ${p.plot}</span>
+        <span class="prio-h"><i style="background:${PRIO_DOT[p.priority]}"></i>${p.priority}</span>
       </div>
-      <span class="prio ${p.priority}">${p.priority}</span>
+      <div class="cust-h">${esc(p.customer)}</div>
+      <div class="loc-h">${icon('pin')}${esc(p.location)}</div>
     </div>
-    <div class="meta">
-      <span class="pay ${p.payment}">${p.payment==='Loan'?icon('bank'):icon('cash')}${p.payment}</span>
-      <span class="chip">${p.area} cents</span>
-      <span class="chip">${lakh(totalValue(p))}</span>
-    </div>
-    <div style="margin-top:12px">${statusPill(p.statusKey)}</div>
-    <div class="bar" style="margin-top:10px"><i style="width:${progressPct(p)}%"></i></div>
-    <div class="statusrow">
-      <div class="assignee">${av(p.assigned,28)}<div class="stack"><small>Assigned to</small><span class="b small">${esc(USERS[p.assigned].name)}</span></div></div>
-      <span class="muted small">${progressPct(p)}% · ${timeAgo(p.updatedAt)}</span>
+    <div class="plot-body">
+      <div class="meta">
+        <span class="pay ${p.payment}">${p.payment==='Loan'?icon('bank'):icon('cash')}${p.payment}</span>
+        <span class="chip">${p.area} cents</span>
+        <span class="chip">${lakh(totalValue(p))}</span>
+      </div>
+      <div style="margin-top:12px">${statusPill(p.statusKey)}</div>
+      <div class="bar" style="margin-top:10px"><i style="width:${progressPct(p)}%"></i></div>
+      <div class="statusrow">
+        <div class="assignee">${av(p.assigned,28)}<div class="stack"><small>Assigned to</small><span class="b small">${esc(USERS[p.assigned].name)}</span></div></div>
+        <span class="muted small">${progressPct(p)}% · ${timeAgo(p.updatedAt)}</span>
+      </div>
     </div>
   </div>`;
 }

@@ -174,17 +174,22 @@ button{font-family:inherit}
 
 /* ---------- Plot cards grid ---------- */
 .plot-grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
-.plot{padding:16px;cursor:pointer;transition:.16s;position:relative;overflow:hidden}
+.plot{padding:0;cursor:pointer;transition:.16s;position:relative;overflow:hidden}
 .plot:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:#d9e2ec}
-.plot .top{display:flex;align-items:flex-start;gap:12px}
-.plot .plotno{font-family:"SFMono-Regular",ui-monospace,Menlo,monospace;font-weight:800;font-size:12px;color:var(--brand-2);background:#eef0fb;padding:3px 8px;border-radius:7px}
-.plot .cust{font-size:15px;font-weight:700;margin-top:8px}
-.plot .loc{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-top:2px}
-.plot .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+/* coloured top header band — spans plot no., customer & location */
+.plot .plot-head{padding:15px 16px 14px;color:#fff}
+.plot .ph-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.plot .plotno-h{font-family:ui-monospace,Menlo,monospace;font-weight:800;font-size:12px;letter-spacing:.3px;background:rgba(255,255,255,.22);padding:3px 9px;border-radius:7px}
+.plot .prio-h{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:rgba(255,255,255,.20);padding:3px 9px;border-radius:20px;color:#fff}
+.plot .prio-h i{width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.plot .cust-h{font-size:16px;font-weight:800;margin-top:11px;text-shadow:0 1px 2px rgba(0,0,0,.18)}
+.plot .loc-h{font-size:12px;display:flex;align-items:center;gap:5px;margin-top:3px;color:#fff;opacity:.96}
+.plot .loc-h .ic{width:14px;height:14px;flex:0 0 auto}
+.plot .plot-body{padding:14px 16px 16px}
+.plot .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .plot .statusrow{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .plot .assignee{display:flex;align-items:center;gap:8px}
 .plot .assignee small{color:var(--muted);font-size:11px}
-.plot .stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
 
 /* toolbar / filters */
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
