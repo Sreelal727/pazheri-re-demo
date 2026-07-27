@@ -13,6 +13,8 @@ const state = {
   notifications: [],
   filter: { q:'', payment:'all', stage:'all' },
   openPlot: null,
+  drawerTab: 'pipeline',
+  pendingUpload: null,
   scripted: false,
 };
 
@@ -85,6 +87,19 @@ function buildData(){
       p.timeline.push(entry);
     }
     p.updatedAt = p.timeline.length ? p.timeline[p.timeline.length-1].ts : p.createdAt;
+
+    // Pre-seed "scanned" documents for every stage already completed
+    p.files=[];
+    const rte=routeFor(p), pi=rte.indexOf(p.statusKey);
+    docCatalog(p).forEach(d=>{
+      const si=rte.indexOf(d.stage);
+      if(si>=0 && si<=pi){
+        const tl=p.timeline.find(e=>e.statusKey===d.stage);
+        p.files.push({ key:d.key, label:d.label, fileName:d.label.replace(/[^a-z0-9]+/gi,'_')+'.pdf',
+          mime:'image/svg+xml', dataUrl:sampleDoc(d.label,p),
+          by: tl?tl.actorKey:p.assigned, ts:(tl?tl.ts:p.createdAt), sample:true });
+      }
+    });
     return p;
   });
 
@@ -272,8 +287,16 @@ function attnRow(p){
   </div></div>`;
 }
 function feedItem(a){
-  const st=STATUS[a.statusKey]; const c=deptColor(st.dept);
   const p=state.projects.find(x=>x.id===a.projectId);
+  if(a.kind==='doc'){
+    const dep=USERS[a.actorKey].dept;
+    return `<div class="item" data-plot="${a.projectId}" style="cursor:pointer">
+      <div class="ic" style="background:${deptColor(dep)}">${icon('file')}</div>
+      <div class="txt"><b>${esc(USERS[a.actorKey].name)}</b> uploaded <b>${esc(a.label)}</b>
+        <div class="when">Document · ${p?('Plot '+p.plot+' · '+esc(p.customer)):''} · ${timeAgo(a.ts)}</div></div>
+    </div>`;
+  }
+  const st=STATUS[a.statusKey]; const c=deptColor(st.dept);
   return `<div class="item" data-plot="${a.projectId}" style="cursor:pointer">
     <div class="ic" style="background:${c}">${icon('bolt')}</div>
     <div class="txt">
@@ -399,15 +422,19 @@ function renderActivity(){
       <div class="spacer"></div><span class="live"><span class="blink"></span>Live</span></div>
     <div class="card pad">
       <table class="tbl">
-        <thead><tr><th>When</th><th>Person</th><th>Department</th><th>Plot / Customer</th><th>Status set</th></tr></thead>
+        <thead><tr><th>When</th><th>Person</th><th>Department</th><th>Plot / Customer</th><th>Action</th></tr></thead>
         <tbody>
-        ${rows.map(a=>{ const p=state.projects.find(x=>x.id===a.projectId); const st=STATUS[a.statusKey];
+        ${rows.map(a=>{ const p=state.projects.find(x=>x.id===a.projectId);
+          const dep = a.kind==='doc' ? USERS[a.actorKey].dept : STATUS[a.statusKey].dept;
+          const action = a.kind==='doc'
+            ? `<span class="pill" style="color:var(--brand-2);background:#eef0fb"><i class="dt"></i>📎 ${esc(a.label)}</span>`
+            : statusPill(a.statusKey);
           return `<tr data-plot="${a.projectId}" style="cursor:pointer">
             <td class="muted small">${fmtDateTime(a.ts)}<div>${timeAgo(a.ts)}</div></td>
             <td><div class="flex">${av(a.actorKey,26)}<span class="b">${esc(USERS[a.actorKey].name)}</span></div></td>
-            <td>${deptTag(st.dept)}</td>
+            <td>${deptTag(dep)}</td>
             <td><span class="plotno">${p?p.plot:''}</span> · ${p?esc(p.customer):''}</td>
-            <td>${statusPill(a.statusKey)}</td>
+            <td>${action}</td>
           </tr>`; }).join('')}
         </tbody>
       </table>
@@ -472,10 +499,7 @@ function openPlot(id){
     </div>`;
   });
 
-  // audit newest first
-  const audit=[...p.timeline].reverse();
-  // docs
-  const docs = docState(p);
+  const tab = state.drawerTab || 'pipeline';
 
   $('#drawerHead').innerHTML=`
     <button class="close" data-close-drawer>${icon('x')}</button>
@@ -489,6 +513,12 @@ function openPlot(id){
       <div><span>Total Value</span><b>${lakh(totalValue(p))}</b></div>
       <div><span>Progress</span><b>${progressPct(p)}%</b></div>
     </div>`;
+
+  const panel =
+    tab==='docs'    ? docTabHTML(p) :
+    tab==='history' ? historyHTML(p) :
+                      `<div class="section-head"><h2>Process pipeline</h2><span class="hint">${p.payment} route</span></div>
+                       <div class="card pad"><div class="pipe">${pipe}</div></div>`;
 
   $('#drawerBody').innerHTML=`
     <div class="card pad">
@@ -505,40 +535,168 @@ function openPlot(id){
       </div>
     </div>
 
-    <div class="section-head"><h2>Process pipeline</h2><span class="hint">${p.payment} route</span></div>
-    <div class="card pad"><div class="pipe">${pipe}</div></div>
+    <div class="d-tabs">
+      <button data-tab="pipeline" class="${tab==='pipeline'?'on':''}">${icon('map')} Pipeline</button>
+      <button data-tab="docs" class="${tab==='docs'?'on':''}">${icon('file')} Documents <span class="cnt">${p.files.length}</span></button>
+      <button data-tab="history" class="${tab==='history'?'on':''}">${icon('history')} History <span class="cnt">${p.timeline.length}</span></button>
+    </div>
 
-    <div class="section-head"><h2>Documents</h2></div>
-    <div class="card pad"><div class="docs">${docs.map(d=>`
-      <div class="doc ${d.on?'on':'off'}"><span class="tick">${d.on?icon('tick'):''}</span>${esc(d.name)}</div>`).join('')}</div></div>
-
-    <div class="section-head"><h2>History & audit trail</h2><span class="hint">${p.timeline.length} events</span></div>
-    <div class="card pad"><div class="tl">
-      ${audit.map(e=>`<div class="row">
-        <div class="av">${av(e.actorKey,32)}</div>
-        <div class="c"><div><b>${esc(USERS[e.actorKey].name)}</b> <span class="muted">(${esc(USERS[e.actorKey].role)})</span> set <b>${esc(STATUS[e.statusKey].label)}</b></div>
-          <div class="m">${deptName(STATUS[e.statusKey].dept)} · ${fmtDateTime(e.ts)} · ${timeAgo(e.ts)}</div>
-          ${e.note?`<div class="note">“${esc(e.note)}”</div>`:''}
-        </div></div>`).join('')}
-    </div></div>`;
+    <div data-drawer-panel>${panel}</div>`;
 
   $('#scrim').classList.add('open');
   $('#drawer').classList.add('open');
 }
 function closeDrawer(){ state.openPlot=null; $('#scrim').classList.remove('open'); $('#drawer').classList.remove('open'); }
-function docState(p){
-  const i=stepIndex(p), r=routeFor(p);
-  const at = k => i>=r.indexOf(k) && r.indexOf(k)>=0;
-  return [
-    {name:'Booking Form', on:at('token')},
-    {name:'Original Deed', on:at('docs_received')},
-    {name:'Backdeed', on:at('docs_received')},
-    {name:'Land Tax Receipt', on:at('docs_received')},
-    {name:'Possession Certificate', on:at('docs_received')},
-    {name:'Thandaper', on:at('docs_received')},
-    {name:'Aadhar Card', on: p.payment==='Cash'?at('kyc'):at('loan_docs')},
-    {name:'PAN Card', on: p.payment==='Cash'?at('kyc'):at('loan_docs')},
+
+/* ---- History tab (audit trail incl. document uploads) ---- */
+function historyHTML(p){
+  const audit=[...p.timeline].reverse();
+  return `<div class="section-head"><h2>History &amp; audit trail</h2><span class="hint">${p.timeline.length} events</span></div>
+    <div class="card pad"><div class="tl">
+      ${audit.map(e=>{
+        if(e.kind==='doc'){ return `<div class="row">
+          <div class="av">${av(e.actorKey,32)}</div>
+          <div class="c"><div><b>${esc(USERS[e.actorKey].name)}</b> <span class="muted">(${esc(USERS[e.actorKey].role)})</span> uploaded <b>${esc(e.label)}</b></div>
+            <div class="m">Document · ${fmtDateTime(new Date(e.ts))} · ${timeAgo(new Date(e.ts))}</div>
+            ${e.fileName?`<div class="note">📎 ${esc(e.fileName)}</div>`:''}
+          </div></div>`; }
+        return `<div class="row">
+          <div class="av">${av(e.actorKey,32)}</div>
+          <div class="c"><div><b>${esc(USERS[e.actorKey].name)}</b> <span class="muted">(${esc(USERS[e.actorKey].role)})</span> set <b>${esc(STATUS[e.statusKey].label)}</b></div>
+            <div class="m">${deptName(STATUS[e.statusKey].dept)} · ${fmtDateTime(new Date(e.ts))} · ${timeAgo(new Date(e.ts))}</div>
+            ${e.note?`<div class="note">“${esc(e.note)}”</div>`:''}
+          </div></div>`;
+      }).join('')}
+    </div></div>`;
+}
+
+/* ---- Documents tab: upload + view ---- */
+function docCatalog(p){
+  const idStage = p.payment==='Cash' ? 'kyc' : 'loan_docs';
+  let list=[
+    {key:'booking',    label:'Booking Form',          stage:'token'},
+    {key:'deed',       label:'Original Deed',          stage:'docs_received'},
+    {key:'backdeed',   label:'Backdeed',               stage:'docs_received'},
+    {key:'landtax',    label:'Land Tax Receipt',       stage:'docs_received'},
+    {key:'possession', label:'Possession Certificate', stage:'docs_received'},
+    {key:'thandaper',  label:'Thandaper',              stage:'docs_received'},
+    {key:'scrutiny_r', label:'Scrutiny Report',        stage:'scrutiny'},
+    {key:'evaluation_r',label:'Evaluation Report',     stage:'evaluation'},
+    {key:'aadhar',     label:'Aadhar Card',            stage:idStage},
+    {key:'pan',        label:'PAN Card',               stage:idStage},
   ];
+  if(p.payment==='Loan') list=list.concat([
+    {key:'bank_stmt',  label:'Bank Statement (1 yr)',  stage:'loan_docs'},
+    {key:'income',     label:p.employment==='Business'?'3-Year ITR':'6-Month Salary Slips', stage:'loan_docs'},
+    {key:'sanction_l', label:'Sanction Letter',        stage:'sanction'},
+  ]);
+  return list;
+}
+function latestFile(p,key){ for(let i=p.files.length-1;i>=0;i--) if(p.files[i].key===key) return p.files[i]; return null; }
+function docTabHTML(p){
+  const cat=docCatalog(p);
+  const rows=cat.map(d=>{
+    const f=latestFile(p,d.key);
+    return `<div class="doc-item">
+      <div class="d-ic">${f?`<img src="${f.dataUrl}" alt="">`:icon('file')}</div>
+      <div class="d-info">
+        <div class="nm">${esc(d.label)}</div>
+        <div class="sub">${f?`${esc(f.fileName)} · ${esc(USERS[f.by].name)} · ${timeAgo(new Date(f.ts))}`:'No document attached yet'}</div>
+      </div>
+      <div class="d-act">
+        <span class="doc-badge ${f?'up':'pend'}">${f?'Uploaded':'Pending'}</span>
+        ${f?`<button class="btn secondary sm" data-view-doc="${p.id}:${d.key}">${icon('eye')} View</button>`:''}
+        <button class="btn sm" data-upload-doc="${p.id}:${d.key}:${encodeURIComponent(d.label)}">${icon('upload')} ${f?'Replace':'Upload'}</button>
+      </div>
+    </div>`;
+  }).join('');
+  const custom=p.files.filter(f=>f.key.indexOf('custom_')===0);
+  return `<div class="section-head"><h2>Documents</h2><span class="hint">${p.files.length} attached · upload scans (image/PDF) and view them</span></div>
+    <div class="doc-list">
+      ${rows}
+      ${custom.map(f=>`<div class="doc-item">
+        <div class="d-ic">${isImg(f.mime)?`<img src="${f.dataUrl}" alt="">`:icon('file')}</div>
+        <div class="d-info"><div class="nm">${esc(f.label)}</div>
+          <div class="sub">${esc(f.fileName)} · ${esc(USERS[f.by].name)} · ${timeAgo(new Date(f.ts))}</div></div>
+        <div class="d-act"><span class="doc-badge up">Uploaded</span>
+          <button class="btn secondary sm" data-view-doc="${p.id}:${f.key}">${icon('eye')} View</button></div>
+      </div>`).join('')}
+      <button class="btn secondary block" data-upload-doc="${p.id}:custom:" style="margin-top:4px">${icon('plus')} Upload additional document</button>
+    </div>`;
+}
+const isImg = m => /^image\//.test(m||'');
+const isPdf = m => /pdf/.test(m||'');
+
+/* A mock "scanned document" preview (SVG data URL) for pre-seeded files */
+function escSvg(s){ return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function sampleDoc(label,p){
+  const lines=Array.from({length:11},(_,i)=>`<rect x="40" y="${170+i*34}" width="${360-(i%4)*40}" height="9" rx="4" fill="#e2e8f0"/>`).join('');
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="560" height="760" viewBox="0 0 560 760">
+    <rect width="560" height="760" fill="#ffffff"/>
+    <rect width="560" height="104" fill="#0b1133"/>
+    <text x="40" y="46" fill="#ecca6f" font-family="Arial, sans-serif" font-size="21" font-weight="bold">PAZHERI PROPERTIES</text>
+    <text x="40" y="78" fill="#ffffff" font-family="Arial, sans-serif" font-size="17">${escSvg(label)}</text>
+    <text x="40" y="146" fill="#0b1133" font-family="Arial, sans-serif" font-size="15" font-weight="bold">Plot ${escSvg(p.plot)} · ${escSvg(p.customer)}</text>
+    ${lines}
+    <g transform="translate(400,600) rotate(-14)">
+      <circle cx="60" cy="60" r="58" fill="none" stroke="#16a34a" stroke-width="4"/>
+      <text x="60" y="55" fill="#16a34a" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle">VERIFIED</text>
+      <text x="60" y="78" fill="#16a34a" font-family="Arial, sans-serif" font-size="11" text-anchor="middle">PAZHERI LEGAL</text>
+    </g>
+  </svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+
+/* ---- Document viewer overlay ---- */
+function openViewer(pid,key){
+  const p=state.projects.find(x=>x.id===pid); if(!p) return;
+  const f=latestFile(p,key); if(!f) return;
+  let stage;
+  if(isImg(f.mime)) stage=`<img src="${f.dataUrl}" alt="${esc(f.label)}">`;
+  else if(isPdf(f.mime)) stage=`<iframe src="${f.dataUrl}" title="${esc(f.label)}"></iframe>`;
+  else stage=`<div style="color:#fff;text-align:center"><div style="font-size:40px">📄</div><div style="margin-top:10px">${esc(f.fileName)}</div><div class="muted" style="color:#cbd5e1;margin-top:6px">Preview not available for this file type</div></div>`;
+  $('#viewerScrim').innerHTML=`
+    <div class="viewer-bar">
+      <div>${icon('file')}</div>
+      <div><div class="vt">${esc(f.label)}</div><div class="vs">Plot ${p.plot} · ${esc(f.fileName)} · uploaded by ${esc(USERS[f.by].name)}</div></div>
+      <div class="sp"></div>
+      <a href="${f.dataUrl}" target="_blank" rel="noopener">${icon('ext')} Open in new tab</a>
+      <a href="${f.dataUrl}" download="${esc(f.fileName)}">${icon('download')} Download</a>
+      <button data-close-viewer>${icon('x')} Close</button>
+    </div>
+    <div class="viewer-stage">${stage}</div>`;
+  $('#viewerScrim').classList.add('open');
+}
+function closeViewer(){ $('#viewerScrim').classList.remove('open'); $('#viewerScrim').innerHTML=''; }
+
+/* ---- Handle a chosen file from the hidden input ---- */
+function onFileChosen(input){
+  const file=input.files&&input.files[0];
+  const target=state.pendingUpload; state.pendingUpload=null; input.value='';
+  if(!file||!target) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const p=state.projects.find(x=>x.id===target.pid); if(!p) return;
+    const custom = target.key==='custom';
+    const key = custom ? 'custom_'+p.files.length+'_'+file.size : target.key;
+    const label = custom ? file.name.replace(/\.[^.]+$/,'') : target.label;
+    const ts=new Date();
+    const f={ key, label, fileName:file.name, mime:file.type||'application/octet-stream',
+      dataUrl:reader.result, by:state.currentUserKey, ts };
+    p.files.push(f);
+    p.timeline.push({ ts, actorKey:state.currentUserKey, kind:'doc', label, fileName:file.name });
+    state.activity.unshift({ ts, actorKey:state.currentUserKey, projectId:p.id, kind:'doc', label });
+    p.updatedAt=ts;
+    toast('ok','Document uploaded',`${label} · Plot ${p.plot}`, '#10b981');
+    state.drawerTab='docs';
+    render();
+    if(state.openPlot===p.id) openPlot(p.id);
+  };
+  reader.readAsDataURL(file);
+}
+function triggerUpload(pid,key,label){
+  state.pendingUpload={pid,key,label};
+  $('#fileInput').click();
 }
 
 /* ---------- Permissions ---------- */
@@ -653,6 +811,18 @@ document.addEventListener('click',e=>{
   // nav
   const nav=t.closest('[data-view]');
   if(nav){ state.view=nav.dataset.view; closeAllMenus(); render(); $('#sidebar').classList.remove('open'); return; }
+  // drawer tab switch
+  const tabBtn=t.closest('[data-tab]');
+  if(tabBtn && state.openPlot){ state.drawerTab=tabBtn.dataset.tab; openPlot(state.openPlot); return; }
+  // document upload
+  const upl=t.closest('[data-upload-doc]');
+  if(upl){ e.stopPropagation(); const parts=upl.dataset.uploadDoc.split(':');
+    triggerUpload(parts[0], parts[1], parts[2]?decodeURIComponent(parts[2]):''); return; }
+  // document view
+  const vdoc=t.closest('[data-view-doc]');
+  if(vdoc){ e.stopPropagation(); const parts=vdoc.dataset.viewDoc.split(':'); openViewer(parts[0],parts[1]); return; }
+  // close document viewer
+  if(t.closest('[data-close-viewer]') || t.id==='viewerScrim'){ closeViewer(); return; }
   // open plot (cards / rows / feed)
   const plotEl=t.closest('[data-plot]');
   if(plotEl && !t.closest('[data-advance]') && !t.closest('[data-update]')){
@@ -695,7 +865,8 @@ document.addEventListener('input',e=>{
     $('#globalSearch').focus(); }
   if(e.target.id==='stageSel'){ state.filter.stage=e.target.value; renderPlots(); }
 });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal(); closeDrawer(); closeAllMenus(); }});
+document.addEventListener('change',e=>{ if(e.target.id==='fileInput') onFileChosen(e.target); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#viewerScrim').classList.contains('open')){ closeViewer(); return; } closeModal(); closeDrawer(); closeAllMenus(); }});
 function closeAllMenus(){ $('#roleMenu').classList.remove('open'); $('#notifPanel').classList.remove('open'); }
 
 /* ---------- Scripted "live" update (demo realism) ---------- */
@@ -733,6 +904,11 @@ function icon(n){
     plus:'<path d="M12 5v14M5 12h14"/>',
     search:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
     menu:'<path d="M3 6h18M3 12h18M3 18h18"/>',
+    file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+    upload:'<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M12 15V3M8 7l4-4 4 4"/>',
+    download:'<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M12 3v12M8 11l4 4 4-4"/>',
+    eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    ext:'<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
   };
   return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">${I[n]||''}</svg>`;
 }
