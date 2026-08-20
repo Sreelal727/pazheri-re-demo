@@ -1,4 +1,4 @@
-# Pazheri Properties — Sales & Legal ERP (UI Demo)
+# Pazheri Properties — Sales, Legal & Business ERP (UI Demo)
 
 A clickable, front-end **demo UI** for the Pazheri Properties real-estate ERP.
 It focuses on the client's core pain point: **live, shared status tracking of every
@@ -21,6 +21,8 @@ timestamped history of who did what.
 | Customer name mapped to plot number | Every card & drawer shows **Plot ↔ Customer** mapping |
 | Cash vs Loan collection routes | Separate **Cash (KYC)** and **Loan (Financing)** pipelines |
 | 6 departments | **Departments** view: Legal, Sales & Marketing, Purchase/Land Acquisition, Operations, Finance, HR |
+| Leadership visibility | **Executive Cockpit** (MD) and **CFO Console** with board-level KPIs, charts and approval queues |
+| Wider business coverage | 33 modules across Overview, Sales & CRM, Inventory, Legal, Finance, Operations, People and Governance |
 
 ## The workflow (from the client's flowchart)
 
@@ -48,18 +50,50 @@ The **Legal → Finance handoff** on the loan route is the heart of the demo.
    show an *Action needed* prompt for that plot.
 4. Open any plot to see its **pipeline**, **documents checklist**, and full
    **audit trail**. Check **Activity & Audit Log** for the company-wide history.
+5. Open **Executive Cockpit** and **CFO Console** for the leadership view — revenue,
+   margin, receivables ageing, budget utilisation and the approval queues.
 
-The role switcher (top-right) lets you view the ERP as **Management, Legal, Finance,
-Sales or Operations** — actions are gated to the department that owns each step.
+The role switcher (top-right) lets you view the ERP as **CEO, Managing Director, CFO,
+Legal, Sales, Operations, HR or Land Acquisition** — actions are gated to the department
+that owns each step.
+
+## Module map
+
+The sidebar groups **33 screens** into eight areas:
+
+| Group | Screens |
+|---|---|
+| **Overview** | Command Centre · Executive Cockpit (MD) · CFO Console · Analytics & Insights |
+| **Sales & CRM** | Leads & Enquiries · Sales Pipeline · Site Visits · Customer 360 · Bookings & Plots |
+| **Inventory & Land** | Land Bank · Projects & Phases · Land Acquisition |
+| **Legal** | Legal Desk · Title & Scrutiny · Deeds & Registration · Compliance Tracker |
+| **Finance** | Finance Desk · Receivables · Bank & Loan Tracker · Expenses & Payables · Commissions |
+| **Operations** | Operations Desk · Registration Calendar · Document Vault · Handover Tracker |
+| **People** | Departments · Team Directory · Attendance & Leave · Payroll Summary · Targets & Performance |
+| **Governance** | Approvals & Tasks · Activity & Audit Log · Reports Library · Settings & Masters |
+
+Every dashboard is built from a dependency-free SVG chart toolkit — line/area, grouped
+and stacked bars, donuts, radial gauges, funnels, heatmaps, bullet charts and sparklines.
 
 ## Project structure
 
 ```
-index.html          # app shell
-assets/styles.css   # design system
-assets/data.js      # mock departments, people, workflow catalog & plots
-assets/app.js       # rendering + interactions (vanilla JS, no framework)
+index.html                  # app shell + script order
+assets/styles.css           # design tokens & base components
+assets/styles-modules.css   # nav groups, charts and v2 screen styles
+assets/data.js              # departments, people, workflow catalog & plots
+assets/data-extra.js        # org chart, CRM, land bank, financial & HR datasets
+assets/lib/core.js          # shared state, formatters, icons, view registry
+assets/lib/charts.js        # SVG chart toolkit (no dependencies)
+assets/lib/docs.js          # document catalog, upload & viewer
+assets/lib/build.js         # derives timelines, audit feed & notifications
+assets/lib/nav.js           # navigation tree
+assets/views/*.js           # one file per functional area, self-registering
+assets/app.js               # shell: sidebar, topbar, drawer, workflow & events
 ```
+
+Screens register themselves with `PZ.registerView(key, [title, subtitle], renderFn)`,
+so adding a module is one function in one file plus one line in `nav.js`.
 
 ## Notes for the client demo
 
