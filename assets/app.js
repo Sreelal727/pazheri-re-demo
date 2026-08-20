@@ -320,6 +320,9 @@ document.addEventListener('click',e=>{
   if(t.closest('#bellBtn')){ e.stopPropagation(); $('#roleMenu').classList.remove('open'); $('#notifPanel').classList.toggle('open'); return; }
   if(t.closest('[data-mark-all]')){ state.notifications.forEach(n=>{ if(cu().dept==='admin'||n.dept===cu().dept)n.read=true; }); render(); $('#notifPanel').classList.add('open'); return; }
 
+  const modeBtn=t.closest('[data-mode]');
+  if(modeBtn){ state[modeBtn.dataset.modeKey]=modeBtn.dataset.mode; renderView(); return; }
+
   const seg=t.closest('[data-seg] button');
   if(seg){ const key=seg.closest('[data-seg]').dataset.seg; state.filter[key]=seg.dataset.val; renderView(); return; }
 
@@ -365,6 +368,6 @@ PZBuild.buildData();
 render();
 scheduleLiveDemo();
 
-window.PZApp = { render, renderView, openPlot, goto, canAct, advanceStatus };
+window.PZApp = { render, renderView, openPlot, closeDrawer, closeModal, goto, canAct, advanceStatus };
 window.__pazheri={state};
 })();

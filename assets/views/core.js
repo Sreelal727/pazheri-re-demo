@@ -64,7 +64,7 @@ registerView('dashboard', ['Command Centre','Live overview of every plot, depart
         C.donut(deptLoad,{size:170, center:String(active.length), centerSub:'in progress'}))}
     </div>
 
-    <div class="grid cols-2 mt">
+    <div class="grid cols-2 mt" id="dashAttention">
       <div class="card pad">
         <div class="row-between"><h2 style="margin:0;font-size:15px">Needs your attention</h2>
           <span class="chip" style="color:${deptColor(myDept)};background:${tint(deptColor(myDept))}">${esc(deptName(myDept))} view</span></div>

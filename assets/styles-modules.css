@@ -274,3 +274,101 @@
   .period-btn{display:none}
   .crumb{display:none}
 }
+
+/* ---------- Layout mode switcher (tiles / board / list) ---------- */
+.mode-seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;flex:0 0 auto}
+.mode-seg button{
+  display:inline-flex;align-items:center;gap:7px;border:none;background:transparent;cursor:pointer;
+  padding:6px 12px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--muted);transition:.15s;
+}
+.mode-seg button .ic{width:15px;height:15px;flex:0 0 auto}
+.mode-seg button:hover{color:var(--ink-2);background:#f1f5f9}
+.mode-seg button.on{background:var(--brand);color:#fff;box-shadow:0 2px 6px rgba(11,17,51,.22)}
+.mode-seg button.on:hover{background:var(--brand)}
+@media(max-width:760px){ .mode-seg button span{display:none} .mode-seg button{padding:7px 10px} }
+
+/* ---------- Lead tile ---------- */
+.lead-grid{grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
+.lead-tile{padding:0;overflow:hidden;transition:.16s;display:flex;flex-direction:column}
+.lead-tile:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:#d9e2ec}
+.lt-band{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;color:#fff}
+.lt-stage{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.9px}
+.lt-temp{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.5px;background:rgba(255,255,255,.22);padding:3px 9px;border-radius:20px}
+.lt-temp i{width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.lt-body{padding:14px 15px 15px;display:flex;flex-direction:column;flex:1}
+.lt-name{font-size:16px;font-weight:800;letter-spacing:-.2px}
+.lt-sub{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:4px}
+.lt-sub .ic{width:12px;height:12px;flex:0 0 auto;opacity:.8}
+.lt-score{margin-top:13px}
+.lt-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 0;
+  padding:12px 0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line)}
+.lt-facts span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+.lt-facts b{font-size:13px;display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:13px}
+.lt-foot small{color:var(--muted);font-size:10.5px}
+.lt-next{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;
+  background:#f1f5f9;color:var(--ink-2);padding:5px 9px;border-radius:8px;max-width:52%;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt-next .ic{width:12px;height:12px;flex:0 0 auto;color:var(--gold-2)}
+
+/* ---------- Tour trigger ---------- */
+.tour-btn{
+  display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;white-space:nowrap;cursor:pointer;
+  border:1px solid rgba(212,169,63,.45);border-radius:11px;padding:9px 13px;
+  background:linear-gradient(135deg,#fdf6e4,#fbeecb);color:var(--gold-ink);
+  font-size:12.5px;font-weight:700;transition:.16s;
+}
+.tour-btn:hover{border-color:var(--gold-2);box-shadow:0 6px 16px rgba(184,134,43,.24);transform:translateY(-1px)}
+.tour-btn svg{color:var(--gold-2)}
+@media(max-width:1080px){ .tour-btn span{display:none} .tour-btn{padding:10px} }
+
+/* ---------- Tour overlay ---------- */
+body.tour-on{overflow:hidden}
+.tour-root{position:fixed;inset:0;z-index:200;pointer-events:auto}
+.tour-root::before{content:"";position:absolute;inset:0;background:transparent}
+.tour-spot{
+  position:fixed;border-radius:14px;pointer-events:none;transition:opacity .2s ease,
+    left .28s cubic-bezier(.4,0,.2,1), top .28s cubic-bezier(.4,0,.2,1),
+    width .28s cubic-bezier(.4,0,.2,1), height .28s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 0 0 9999px rgba(8,12,35,.74), 0 0 0 2px var(--gold-3), 0 0 26px 4px rgba(212,169,63,.45);
+}
+/* When there is no target the whole screen dims evenly */
+.tour-spot.bare{box-shadow:0 0 0 9999px rgba(8,12,35,.80);transition:none}
+
+.tour-card{
+  position:fixed;width:min(410px,calc(100vw - 32px));background:#fff;border-radius:18px;
+  box-shadow:0 24px 60px rgba(8,12,35,.42);padding:18px 20px 16px;
+  animation:tourIn .24s cubic-bezier(.34,1.4,.64,1);
+  transition:left .26s cubic-bezier(.4,0,.2,1), top .26s cubic-bezier(.4,0,.2,1);
+  max-height:calc(100vh - 32px);overflow:auto;
+}
+.tour-card.wide{width:min(680px,calc(100vw - 32px))}
+@keyframes tourIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+
+.tc-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tc-chapter{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.3px;
+  color:var(--gold-2);background:#fdf6e4;padding:4px 10px;border-radius:20px}
+.tc-x{width:28px;height:28px;border:none;background:#f1f5f9;color:var(--muted);border-radius:8px;
+  display:grid;place-items:center;cursor:pointer;transition:.14s;flex:0 0 auto}
+.tc-x:hover{background:#e2e8f0;color:var(--ink)}
+.tc-title{margin:12px 0 8px;font-size:18px;letter-spacing:-.3px;line-height:1.25}
+.tc-body{font-size:13.5px;color:var(--ink-2);line-height:1.6}
+.tc-body p{margin:0 0 10px}
+.tc-body p:last-child{margin-bottom:0}
+.tc-body b{color:var(--ink);font-weight:700}
+.tour-list{margin:0 0 10px;padding-left:18px}
+.tour-list li{margin-bottom:6px}
+.tour-chain{background:#f8fafc;border-left:3px solid var(--brand-3);border-radius:0 10px 10px 0;padding:11px 13px}
+.tour-try{background:#fdf6e4;border-left:3px solid var(--gold-2);border-radius:0 10px 10px 0;padding:11px 13px}
+.tour-flow{width:100%;height:auto;display:block;margin:6px 0 12px}
+
+.tc-foot{display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px 0 0;
+  border-top:1px solid var(--line);position:sticky;bottom:-16px;background:#fff}
+.tc-dots{display:flex;gap:4px;flex-wrap:wrap;max-width:120px}
+.tc-dots i{width:6px;height:6px;border-radius:50%;background:#e2e8f0;transition:.2s}
+.tc-dots i.past{background:#cbd5e1}
+.tc-dots i.on{background:var(--gold-2);width:16px;border-radius:20px}
+.tc-count{font-size:11.5px;color:var(--muted);font-weight:700;white-space:nowrap}
+.tc-btns{display:flex;gap:8px;margin-left:auto}
+@media(max-width:600px){ .tc-dots{display:none} }

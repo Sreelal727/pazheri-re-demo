@@ -19,6 +19,10 @@ const state = {
   scripted: false,
   period: 'FY 2024-25',
   navOpen: { overview:true, sales:true, inventory:true, legal:true, finance:true, ops:true, people:true, gov:true },
+  /* per-screen layout preference: tiles | board | list */
+  leadsView: 'tiles',
+  pipelineView: 'board',
+  customersView: 'tiles',
 };
 
 /* ---------- DOM helpers ---------- */
@@ -149,6 +153,19 @@ function progressBar(value, max, color){
   const w = max ? Math.min(100, Math.round(value/max*100)) : 0;
   return `<div class="bar"><i style="width:${w}%;${color?`background:${color}`:''}"></i></div>`;
 }
+const VIEW_MODES = {
+  tiles: { label:'Tiles', ic:'grid' },
+  board: { label:'Board', ic:'layers' },
+  list:  { label:'List',  ic:'list' },
+};
+function modeSwitch(stateKey, modes){
+  const cur = state[stateKey];
+  return `<div class="mode-seg" role="group" aria-label="Layout">${modes.map(m=>{
+    const cfg=VIEW_MODES[m];
+    return `<button data-mode-key="${stateKey}" data-mode="${m}" class="${cur===m?'on':''}"
+      aria-pressed="${cur===m}" title="${cfg.label} view">${icon(cfg.ic,15)}<span>${cfg.label}</span></button>`;
+  }).join('')}</div>`;
+}
 function miniStat(label, value, sub, color){
   return `<div class="mini-stat"><span class="ms-lab">${esc(label)}</span>
     <b class="ms-val" ${color?`style="color:${color}"`:''}>${value}</b>
@@ -234,5 +251,5 @@ window.PZ = { state, $, $$, el, esc, escSvg, fmtINR, lakh, crore, money, num, pc
   cu, tint, deptColor, deptName, av, statusPill, deptTag, tag, statChip,
   totalValue, tokenValue, paidValue, dueValue,
   VIEWS, META, registerView, toast, icon, ICONS,
-  sectionHead, panel, kpiCard, tableHTML, progressBar, miniStat };
+  sectionHead, panel, kpiCard, tableHTML, progressBar, miniStat, modeSwitch, VIEW_MODES };
 })();

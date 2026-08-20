@@ -23,6 +23,7 @@ timestamped history of who did what.
 | 6 departments | **Departments** view: Legal, Sales & Marketing, Purchase/Land Acquisition, Operations, Finance, HR |
 | Leadership visibility | **Executive Cockpit** (MD) and **CFO Console** with board-level KPIs, charts and approval queues |
 | Wider business coverage | 33 modules across Overview, Sales & CRM, Inventory, Legal, Finance, Operations, People and Governance |
+| Onboarding a newcomer | **Take a tour** — a 20-step guided walkthrough of the screen, the modules, the workflow and the data flow |
 
 ## The workflow (from the client's flowchart)
 
@@ -43,6 +44,10 @@ The **Legal → Finance handoff** on the loan route is the heart of the demo.
 
 ## Try it
 
+0. New to the system? Click **Take a tour** in the header — a 20-step guided
+   walkthrough spotlights each part of the screen, explains every button, walks a
+   plot through the full workflow and shows what happens to the data on each action.
+   Use **→ / ←** to move and **Esc** to leave.
 1. Open **`index.html`**.
 2. On the Dashboard, follow the tip: switch to the **Legal** role, open plot
    **D-22 · Nazeer Ahmed**, and click **Mark Complete** on *Loan Eligibility*.
@@ -75,6 +80,9 @@ The sidebar groups **33 screens** into eight areas:
 Every dashboard is built from a dependency-free SVG chart toolkit — line/area, grouped
 and stacked bars, donuts, radial gauges, funnels, heatmaps, bullet charts and sparklines.
 
+**Leads, Sales Pipeline and Customer 360** each render in interchangeable layouts —
+**Tiles**, **Board** (kanban) and **List** (table) — switchable from the control on the screen.
+
 ## Project structure
 
 ```
@@ -88,6 +96,8 @@ assets/lib/charts.js        # SVG chart toolkit (no dependencies)
 assets/lib/docs.js          # document catalog, upload & viewer
 assets/lib/build.js         # derives timelines, audit feed & notifications
 assets/lib/nav.js           # navigation tree
+assets/lib/tour-steps.js    # the guided tour script & data-flow diagram
+assets/lib/tour.js          # tour engine: spotlight, positioning, keyboard
 assets/views/*.js           # one file per functional area, self-registering
 assets/app.js               # shell: sidebar, topbar, drawer, workflow & events
 ```
